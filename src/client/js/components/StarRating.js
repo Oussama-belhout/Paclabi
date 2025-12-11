@@ -21,7 +21,7 @@ class StarRating {
     for (let i = 1; i <= 5; i++) {
       const star = document.createElement('span');
       star.className = `star ${i <= this.rating ? 'active' : ''}`;
-      star.textContent = '⭐';
+      star.textContent = '★';
       star.onclick = () => this.setRating(i);
       this.container.appendChild(star);
     }

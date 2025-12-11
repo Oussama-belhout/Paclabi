@@ -89,10 +89,10 @@ class ConfigPanel {
 
   static createGhostConfig(index = 0) {
     const ghostTypes = [
-      { value: 'blinky', label: 'Blinky (Red) - Chaser', icon: '👻' },
-      { value: 'pinky', label: 'Pinky (Pink) - Ambusher', icon: '👻' },
-      { value: 'inky', label: 'Inky (Cyan) - Flanker', icon: '👻' },
-      { value: 'clyde', label: 'Clyde (Orange) - Random', icon: '👻' }
+      { value: 'blinky', label: 'Blinky (Red) - Chaser', icon: '◉' },
+      { value: 'pinky', label: 'Pinky (Pink) - Ambusher', icon: '◉' },
+      { value: 'inky', label: 'Inky (Cyan) - Flanker', icon: '◉' },
+      { value: 'clyde', label: 'Clyde (Orange) - Random', icon: '◉' }
     ];
 
     return `

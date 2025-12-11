@@ -114,7 +114,7 @@ class GameEngine {
       // Check win condition
       if (this.pacman.getPelletsEaten() >= this.totalPellets) {
         this.stop();
-        Formatters.showToast('🎉 All pellets collected!', 'success');
+        Formatters.showToast('All pellets collected!', 'success');
         return;
       }
     }

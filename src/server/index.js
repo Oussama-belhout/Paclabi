@@ -53,9 +53,9 @@ app.use(errorHandler);
 // Start server
 const PORT = config.PORT;
 app.listen(PORT, () => {
-  console.log(`🚀 Pacman Lab server running on port ${PORT}`);
-  console.log(`📡 API available at http://localhost:${PORT}/api`);
-  console.log(`🌐 Environment: ${config.NODE_ENV}`);
+  console.log(`Pacman Lab server running on port ${PORT}`);
+  console.log(`API available at http://localhost:${PORT}/api`);
+  console.log(`Environment: ${config.NODE_ENV}`);
 });
 
 // Graceful shutdown

@@ -406,6 +406,37 @@ class PacmanLabApp {
             <button class="btn btn-primary" id="start-game-btn">Start Game</button>
             <button class="btn btn-secondary" id="pause-game-btn" style="display: none;">Pause</button>
             <button class="btn btn-primary" id="save-trajectory-btn" style="display: none;">Save Trajectory</button>
+            <button class="btn btn-success" id="view-stats-btn" style="display: none;">📊 View Statistics</button>
+          </div>
+          
+          <div id="game-stats-panel" style="display: none; margin-top: 20px; padding: 20px; background: rgba(99, 116, 255, 0.1); border-radius: 8px; border: 1px solid rgba(99, 116, 255, 0.3);">
+            <h3 style="margin-bottom: 15px;">📊 Game Statistics</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              <div class="stat-item">
+                <strong>Maze:</strong> <span id="stat-maze-name">-</span>
+              </div>
+              <div class="stat-item">
+                <strong>Duration:</strong> <span id="stat-duration">-</span>
+              </div>
+              <div class="stat-item">
+                <strong>Total Moves:</strong> <span id="stat-moves">-</span>
+              </div>
+              <div class="stat-item">
+                <strong>Pellets Collected:</strong> <span id="stat-pellets">-</span>
+              </div>
+              <div class="stat-item">
+                <strong>Completion:</strong> <span id="stat-completion">-</span>
+              </div>
+              <div class="stat-item">
+                <strong>Avg Speed:</strong> <span id="stat-speed">-</span>
+              </div>
+            </div>
+            <div style="margin-top: 15px;">
+              <strong>Trajectory Info:</strong>
+              <div style="color: #9aa4ff; margin-top: 5px;">
+                <span id="stat-trajectory-status">Ready for replay in AI Simulation mode</span>
+              </div>
+            </div>
           </div>
         ` : `
           <div class="empty-state">
@@ -445,6 +476,9 @@ class PacmanLabApp {
         this.gameEngine.stop();
       }
 
+      // Store original grid before game modifies it
+      this.originalGrid = JSON.parse(JSON.stringify(this.currentMaze.grid));
+      
       this.gameEngine = new GameEngine('game-canvas', this.currentMaze.grid, this.currentMaze._id);
       this.gameEngine.start();
 
@@ -478,8 +512,26 @@ class PacmanLabApp {
           this.lastRecordedTrajectory = {
             moves: this.gameEngine.getTrajectory(),
             mazeId: this.currentMaze._id,
-            grid: this.originalGrid || this.currentMaze.grid // Use original grid with pellets
+            grid: this.originalGrid || this.currentMaze.grid, // Use original grid with pellets
+            trajectoryId: null // Will be set if saved to DB
           };
+          
+          // Calculate and display statistics
+          const trajectory = this.gameEngine.getTrajectory();
+          const duration = this.gameEngine.getElapsedTime();
+          const pelletsCollected = this.gameEngine.pacman.getPelletsEaten();
+          const totalPellets = this.gameEngine.totalPellets;
+          
+          document.getElementById('stat-maze-name').textContent = this.currentMaze.name || 'Unnamed Maze';
+          document.getElementById('stat-duration').textContent = (duration / 1000).toFixed(1) + 's';
+          document.getElementById('stat-moves').textContent = trajectory.length;
+          document.getElementById('stat-pellets').textContent = `${pelletsCollected}/${totalPellets}`;
+          document.getElementById('stat-completion').textContent = ((pelletsCollected / totalPellets) * 100).toFixed(1) + '%';
+          document.getElementById('stat-speed').textContent = (trajectory.length / (duration / 1000)).toFixed(2) + ' moves/s';
+          
+          // Show statistics panel
+          document.getElementById('game-stats-panel').style.display = 'block';
+          document.getElementById('view-stats-btn').style.display = 'inline-block';
           
           Formatters.showToast('🎮 Trajectory recorded! Go to AI Simulation to replay it with ghosts!', 'success');
           
@@ -489,12 +541,35 @@ class PacmanLabApp {
             const name = prompt('Enter trajectory name:');
             if (name) {
               try {
-                await this.gameEngine.saveTrajectory(name);
+                const response = await this.gameEngine.saveTrajectory(name);
+                // Store trajectory ID for simulation saving
+                if (response && response.trajectory && response.trajectory._id) {
+                  this.lastRecordedTrajectory.trajectoryId = response.trajectory._id;
+                  document.getElementById('stat-trajectory-status').textContent = 
+                    `Saved to database as "${name}" - Ready for replay`;
+                }
                 Formatters.showToast('Also saved to database!', 'success');
               } catch (error) {
                 Formatters.showToast(`Database save failed (demo mode), but trajectory is still recorded for replay!`, 'info');
+                document.getElementById('stat-trajectory-status').textContent = 
+                  'Recorded in memory only - Ready for replay in AI Simulation';
               }
             }
+          }
+        };
+      }
+      
+      // View stats button handler
+      const viewStatsBtn = document.getElementById('view-stats-btn');
+      if (viewStatsBtn) {
+        viewStatsBtn.onclick = () => {
+          const statsPanel = document.getElementById('game-stats-panel');
+          if (statsPanel.style.display === 'none') {
+            statsPanel.style.display = 'block';
+            viewStatsBtn.textContent = '📊 Hide Statistics';
+          } else {
+            statsPanel.style.display = 'none';
+            viewStatsBtn.textContent = '📊 View Statistics';
           }
         };
       }
@@ -570,7 +645,7 @@ class PacmanLabApp {
           </div>
         ` : ''}
         
-        <div id="ghost-configs" style="${hasRecording ? '' : 'opacity: 0.5; pointer-events: none;'}">
+        <div id="ghost-configs" style="${hasRecording || trajectories.length > 0 ? '' : 'opacity: 0.5; pointer-events: none;'}">
           <h3>👻 Ghost Configuration</h3>
           <p style="color: #9aa4ff; margin-bottom: 15px;">Configure how each ghost will chase Pacman</p>
           <div class="ghost-config-list" id="ghost-config-list">
@@ -660,7 +735,8 @@ class PacmanLabApp {
       this.lastRecordedTrajectory = {
         moves: trajectory.moves,
         mazeId: maze._id,
-        grid: maze.grid
+        grid: maze.grid,
+        trajectoryId: trajectory._id
       };
       
       Formatters.showLoading(false);
@@ -777,12 +853,15 @@ class PacmanLabApp {
         try {
           Formatters.showLoading(true);
           
+          // Ensure results are properly structured (deep clone to avoid reference issues)
+          const cleanResults = JSON.parse(JSON.stringify(results));
+          
           const simulationData = {
             name,
             trajectoryId: this.lastRecordedTrajectory.trajectoryId || 'demo-trajectory',
             mazeId: this.lastRecordedTrajectory.mazeId,
             ghostConfigs: this.simulationViewer.ghostConfigs,
-            results
+            results: cleanResults
           };
           
           const response = await GameAPI.saveSimulation(simulationData);

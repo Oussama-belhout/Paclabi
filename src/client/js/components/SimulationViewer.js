@@ -65,9 +65,14 @@ class SimulationViewer {
     const move = this.trajectory[this.currentFrame];
     
     if (!move) {
-      // End of trajectory
+      // End of trajectory - Pacman escaped!
       this.pause();
-      Formatters.showToast('🎬 Replay finished! Pacman escaped!', 'success');
+      Formatters.showToast('Replay finished! Pacman escaped!', 'success');
+      
+      // Trigger save prompt
+      if (this.onSimulationComplete) {
+        this.onSimulationComplete(this.getResults());
+      }
       return;
     }
 
@@ -88,7 +93,7 @@ class SimulationViewer {
       this.caughtTime = move.timestamp || (this.currentFrame * 100);
       this.caughtByGhost = caughtInfo.ghostType;
       
-      Formatters.showToast(`👻 Pacman caught by ${caughtInfo.ghostType.toUpperCase()}!`, 'error');
+      Formatters.showToast(`Pacman caught by ${caughtInfo.ghostType.toUpperCase()}!`, 'error');
       
       // Trigger save prompt
       if (this.onSimulationComplete) {
@@ -160,13 +165,15 @@ class SimulationViewer {
   }
   
   getResults() {
+    // Return results without frames to avoid serialization issues
+    // Frames are optional and can be very large
     return {
       caught: this.caughtFrame !== null,
       catchPosition: this.caughtFrame !== null ? this.trajectory[this.caughtFrame].position : null,
       catchTime: this.caughtTime,
       caughtByGhost: this.caughtByGhost,
-      totalFrames: this.allFrames.length,
-      frames: this.allFrames
+      totalFrames: this.allFrames.length
+      // frames: [] - intentionally omitted to avoid data corruption issues
     };
   }
 

@@ -91,6 +91,32 @@ exports.runSimulation = async (req, res) => {
       });
     }
 
+    // If simulation results are already provided (from frontend simulation)
+    if (simulationResults) {
+      // Transform ghost configs to match schema
+      const transformedGhostConfigs = ghostConfigs.map(config => ({
+        ghostType: config.type || config.ghostType,
+        algorithm: config.algorithm || 'astar',
+        startPosition: config.startPos || config.startPosition
+      }));
+      
+      const simulation = new Simulation({
+        name,
+        trajectoryId,
+        mazeId: maze._id,
+        ghostConfigs: transformedGhostConfigs,
+        results: simulationResults
+      });
+
+      await simulation.save();
+
+      return res.status(201).json({
+        message: 'Simulation saved successfully',
+        simulation
+      });
+    }
+
+    // Otherwise, run Python simulation
     // Create temporary files for Python simulation
     const tempDir = os.tmpdir();
     const trajectoryFile = path.join(tempDir, `trajectory-${Date.now()}.json`);
