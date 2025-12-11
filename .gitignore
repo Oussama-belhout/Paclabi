@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Environment
+.env
+.venv
+venv/
+ENV/
+
+# Testing
+coverage/
+.coverage
+*.cover
+.pytest_cache/
+.jest/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+
+# Data
+data/trajectories/*.json
+!data/trajectories/.gitkeep
+
+# Old project
+OLD_Pacman/
+

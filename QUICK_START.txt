@@ -1,0 +1,24 @@
+﻿
+===========================================
+  QUICK START GUIDE
+===========================================
+
+After MongoDB is configured:
+
+1. Run: npm start
+
+2. Open browser to: http://localhost:3000
+
+3. You'll see the Pacman Lab interface!
+
+===========================================
+  WHAT YOU CAN DO
+===========================================
+
+âœ… Generate mazes with different algorithms
+âœ… Rate and save mazes
+âœ… Play Pacman with keyboard controls
+âœ… Record trajectories
+âœ… Run ghost AI simulations
+
+===========================================
