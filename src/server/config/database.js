@@ -9,8 +9,6 @@ const connectDatabase = async () => {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pacman-lab';
     
     await mongoose.connect(mongoURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
     });
     

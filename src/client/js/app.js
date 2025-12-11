@@ -52,6 +52,9 @@ class PacmanLabApp {
       case 'simulation':
         await this.renderSimulation(container);
         break;
+      case 'results':
+        await this.renderResults(container);
+        break;
     }
   }
 
@@ -234,7 +237,7 @@ class PacmanLabApp {
         <div class="maze-item-details">
           <p><strong>Size:</strong> ${maze.config.width}×${maze.config.height}</p>
           <p><strong>Algorithm:</strong> ${Formatters.formatAlgorithmName(maze.config.algorithm)}</p>
-          ${maze.rating.user ? `<p><strong>Rating:</strong> ${'⭐'.repeat(maze.rating.user)}</p>` : ''}
+          ${maze.rating.user ? `<p><strong>Rating:</strong> ${'★'.repeat(maze.rating.user)}</p>` : ''}
           <p><strong>Created:</strong> ${Formatters.formatDate(maze.createdAt)}</p>
         </div>
         ${withActions ? `
@@ -278,7 +281,7 @@ class PacmanLabApp {
             <div style="margin-top: 20px; text-align: center;">
               <button id="play-this-maze-btn" 
                       class="btn btn-primary" style="margin-right: 10px;">
-                🎮 Play This Maze
+                Play This Maze
               </button>
             </div>
           </div>
@@ -406,11 +409,11 @@ class PacmanLabApp {
             <button class="btn btn-primary" id="start-game-btn">Start Game</button>
             <button class="btn btn-secondary" id="pause-game-btn" style="display: none;">Pause</button>
             <button class="btn btn-primary" id="save-trajectory-btn" style="display: none;">Save Trajectory</button>
-            <button class="btn btn-success" id="view-stats-btn" style="display: none;">📊 View Statistics</button>
+            <button class="btn btn-success" id="view-stats-btn" style="display: none;">View Statistics</button>
           </div>
           
           <div id="game-stats-panel" style="display: none; margin-top: 20px; padding: 20px; background: rgba(99, 116, 255, 0.1); border-radius: 8px; border: 1px solid rgba(99, 116, 255, 0.3);">
-            <h3 style="margin-bottom: 15px;">📊 Game Statistics</h3>
+            <h3 style="margin-bottom: 15px;">Game Statistics</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
               <div class="stat-item">
                 <strong>Maze:</strong> <span id="stat-maze-name">-</span>
@@ -440,7 +443,7 @@ class PacmanLabApp {
           </div>
         ` : `
           <div class="empty-state">
-            <div class="empty-state-icon">🎮</div>
+            <div class="empty-state-icon">▸</div>
             <div class="empty-state-text">Select a maze to play</div>
             <button class="btn btn-primary" onclick="app.loadPage('generator')">Go to Generator</button>
           </div>
@@ -493,13 +496,13 @@ class PacmanLabApp {
       if (pauseBtn) {
         pauseBtn.onclick = () => {
           const isPaused = this.gameEngine.togglePause();
-          pauseBtn.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+          pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
           pauseBtn.className = isPaused ? 'btn btn-primary' : 'btn btn-secondary';
           
           if (isPaused) {
-            Formatters.showToast('⏸️ Game Paused', 'info');
+            Formatters.showToast('Game Paused', 'info');
           } else {
-            Formatters.showToast('▶️ Game Resumed', 'info');
+            Formatters.showToast('Game Resumed', 'info');
           }
         };
       }
@@ -533,7 +536,7 @@ class PacmanLabApp {
           document.getElementById('game-stats-panel').style.display = 'block';
           document.getElementById('view-stats-btn').style.display = 'inline-block';
           
-          Formatters.showToast('🎮 Trajectory recorded! Go to AI Simulation to replay it with ghosts!', 'success');
+          Formatters.showToast('Trajectory recorded! Go to AI Simulation to replay it with ghosts!', 'success');
           
           // Optionally save to database
           const save = confirm('Trajectory recorded! Do you want to save it to database? (Optional)');
@@ -566,10 +569,10 @@ class PacmanLabApp {
           const statsPanel = document.getElementById('game-stats-panel');
           if (statsPanel.style.display === 'none') {
             statsPanel.style.display = 'block';
-            viewStatsBtn.textContent = '📊 Hide Statistics';
+            viewStatsBtn.textContent = 'Hide Statistics';
           } else {
             statsPanel.style.display = 'none';
-            viewStatsBtn.textContent = '📊 View Statistics';
+            viewStatsBtn.textContent = 'View Statistics';
           }
         };
       }
@@ -613,21 +616,21 @@ class PacmanLabApp {
     container.innerHTML = `
       <div class="card">
         <div class="card-header">
-          <h2>🎬 AI Simulation & Replay</h2>
+          <h2>AI Simulation & Replay</h2>
           <p>Watch your recorded game with ghost AI chasing Pacman!</p>
         </div>
         
         ${hasRecording ? `
           <div class="info" style="background: rgba(76, 175, 80, 0.2); border-color: #4caf50;">
-            ✅ Last played trajectory ready! Or select a saved one below.
+            Last played trajectory ready! Or select a saved one below.
           </div>
         ` : trajectories.length > 0 ? `
           <div class="info" style="background: rgba(99, 116, 255, 0.2); border-color: #6f7dff;">
-            📼 Select a saved trajectory below to replay
+            Select a saved trajectory below to replay
           </div>
         ` : `
           <div class="info" style="background: rgba(255, 152, 0, 0.2); border-color: #ff9800;">
-            ⚠️ No trajectory available. Go to <strong>Play Mode</strong>, play a maze, then save your trajectory!
+            No trajectory available. Go to <strong>Play Mode</strong>, play a maze, then save your trajectory!
           </div>
         `}
         
@@ -635,7 +638,7 @@ class PacmanLabApp {
           <div class="form-group">
             <label for="trajectory-select">Select Trajectory</label>
             <select id="trajectory-select" class="form-control">
-              ${hasRecording ? '<option value="last">🎮 Last Played (In Memory)</option>' : ''}
+              ${hasRecording ? '<option value="last">Last Played (In Memory)</option>' : ''}
               ${trajectories.map(t => `
                 <option value="${t._id}">
                   ${t.name} - ${t.moves ? t.moves.length : 0} moves
@@ -645,8 +648,8 @@ class PacmanLabApp {
           </div>
         ` : ''}
         
-        <div id="ghost-configs" style="${hasRecording || trajectories.length > 0 ? '' : 'opacity: 0.5; pointer-events: none;'}">
-          <h3>👻 Ghost Configuration</h3>
+        <div id="ghost-configs" style="${hasRecording || trajectories.length > 0 ? '' : 'opacity: 0.5; pointer-events: none;}">
+          <h3>Ghost Configuration</h3>
           <p style="color: #9aa4ff; margin-bottom: 15px;">Configure how each ghost will chase Pacman</p>
           <div class="ghost-config-list" id="ghost-config-list">
             ${ConfigPanel.createGhostConfig(0)}
@@ -658,14 +661,14 @@ class PacmanLabApp {
         
         <div class="action-buttons">
           <button class="btn btn-primary" id="start-replay-btn" ${hasRecording || trajectories.length > 0 ? '' : 'disabled'}>
-            ${hasRecording || trajectories.length > 0 ? '▶️ Start Replay' : '⚠️ Record a trajectory first'}
+            ${hasRecording || trajectories.length > 0 ? 'Start Replay' : 'Record a trajectory first'}
           </button>
         </div>
       </div>
       
       <div class="card" id="simulation-viewer" style="display: none; margin-top: 24px;">
         <div class="card-header">
-          <h2>🎮 Live Simulation</h2>
+          <h2>Live Simulation</h2>
           <p>Watching your recorded game with AI ghosts</p>
         </div>
         
@@ -674,9 +677,9 @@ class PacmanLabApp {
         </div>
         
         <div class="replay-controls">
-          <button class="btn btn-secondary" id="replay-play-btn">▶️ Play</button>
-          <button class="btn btn-secondary" id="replay-pause-btn">⏸️ Pause</button>
-          <button class="btn btn-secondary" id="replay-reset-btn">🔄 Reset</button>
+          <button class="btn btn-secondary" id="replay-play-btn">Play</button>
+          <button class="btn btn-secondary" id="replay-pause-btn">Pause</button>
+          <button class="btn btn-secondary" id="replay-reset-btn">Reset</button>
           <div class="replay-progress" id="replay-progress">
             <div class="replay-progress-bar" id="replay-progress-bar"></div>
           </div>
@@ -808,7 +811,7 @@ class PacmanLabApp {
       // Initial render
       this.simulationViewer.render();
       
-      Formatters.showToast('🎬 Simulation ready! Click Play to watch!', 'success');
+      Formatters.showToast('Simulation ready! Click Play to watch!', 'success');
       
       // Scroll to viewer
       document.getElementById('simulation-viewer').scrollIntoView({ behavior: 'smooth' });
@@ -844,8 +847,255 @@ class PacmanLabApp {
     });
   }
   
+  async renderResults(container) {
+    // Load all simulations
+    let simulations = [];
+    try {
+      const response = await GameAPI.getAllSimulations(1, 100);
+      simulations = response.simulations || [];
+    } catch (error) {
+      console.error('Error loading simulations:', error);
+    }
+    
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <h2>Simulation Results</h2>
+          <p>View detailed information about saved simulation runs</p>
+        </div>
+        
+        ${simulations.length === 0 ? `
+          <div class="info" style="background: rgba(255, 152, 0, 0.2); border-color: #ff9800;">
+            No saved simulations yet. Run a simulation in AI Simulation mode and save it!
+          </div>
+        ` : ''}
+        
+        <div id="simulations-list"></div>
+      </div>
+    `;
+    
+    if (simulations.length > 0) {
+      this.renderSimulationsList(simulations);
+    }
+  }
+  
+  renderSimulationsList(simulations) {
+    const listEl = document.getElementById('simulations-list');
+    if (!listEl) return;
+    
+    listEl.innerHTML = '';
+    
+    simulations.forEach((sim, index) => {
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.style.cursor = 'pointer';
+      
+      // Calculate some stats
+      const outcome = sim.results.caught ? 'Caught' : 'Escaped';
+      const outcomeColor = sim.results.caught ? '#ff5252' : '#4caf50';
+      const duration = Formatters.formatDuration(sim.results.duration || 0);
+      const ghostCount = sim.ghostConfigs ? sim.ghostConfigs.length : 0;
+      
+      item.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div style="flex: 1;">
+            <h3 style="margin-bottom: 10px;">${sim.name}</h3>
+            <div class="maze-item-details">
+              <p><strong>Outcome:</strong> <span style="color: ${outcomeColor}; font-weight: bold;">${outcome}</span></p>
+              <p><strong>Duration:</strong> ${duration}</p>
+              <p><strong>Ghosts:</strong> ${ghostCount} configured</p>
+              <p><strong>Created:</strong> ${Formatters.formatDate(sim.createdAt)}</p>
+            </div>
+          </div>
+          <div class="action-buttons" style="margin-left: 20px;">
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); app.viewSimulationDetails('${sim._id}')">
+              View Details
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); app.deleteSimulation('${sim._id}')">
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+      
+      listEl.appendChild(item);
+    });
+  }
+  
+  async viewSimulationDetails(simulationId) {
+    try {
+      Formatters.showLoading(true);
+      const response = await GameAPI.getSimulationById(simulationId, false);
+      const sim = response.simulation;
+      
+      Formatters.showLoading(false);
+      
+      // Create modal overlay
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        overflow-y: auto;
+        padding: 40px 20px;
+      `;
+      
+      const outcome = sim.results.caught ? 'Pacman was Caught' : 'Pacman Escaped';
+      const outcomeColor = sim.results.caught ? '#ff5252' : '#4caf50';
+      const caughtBy = sim.results.caughtByGhost ? ` by ${sim.results.caughtByGhost.toUpperCase()}` : '';
+      
+      modal.innerHTML = `
+        <div style="max-width: 1000px; margin: 0 auto; background: rgba(10, 14, 48, 0.98); padding: 30px; border-radius: 16px; border: 1px solid rgba(99, 116, 255, 0.3);">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px;">
+            <div>
+              <h2 style="color: #fff; margin-bottom: 10px;">${sim.name}</h2>
+              <p style="color: #9aa4ff;">Simulation Details</p>
+            </div>
+            <button id="close-modal" class="btn btn-secondary">Close</button>
+          </div>
+          
+          <!-- Outcome Summary -->
+          <div style="background: rgba(99, 116, 255, 0.1); padding: 20px; border-radius: 8px; border: 2px solid ${outcomeColor}; margin-bottom: 30px;">
+            <h3 style="color: ${outcomeColor}; margin-bottom: 10px;">${outcome}${caughtBy}</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+              <div>
+                <strong>Duration:</strong> ${Formatters.formatDuration(sim.results.duration || 0)}
+              </div>
+              <div>
+                <strong>Total Frames:</strong> ${sim.results.totalFrames || 0}
+              </div>
+              ${sim.results.caught ? `
+                <div>
+                  <strong>Caught At:</strong> Frame ${sim.results.caughtFrame || 'N/A'}
+                </div>
+                <div>
+                  <strong>Time to Catch:</strong> ${Formatters.formatDuration(sim.results.caughtTime || 0)}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          
+          <!-- Maze Information -->
+          <div style="background: rgba(99, 116, 255, 0.05); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px; color: #6f7dff;">Maze Information</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+              <div>
+                <strong>Maze ID:</strong><br/>
+                <code style="color: #9aa4ff; word-break: break-all;">${sim.mazeId || 'N/A'}</code>
+              </div>
+              <div>
+                <strong>Trajectory ID:</strong><br/>
+                <code style="color: #9aa4ff; word-break: break-all;">${sim.trajectoryId || 'N/A'}</code>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Ghost Configurations -->
+          <div style="background: rgba(99, 116, 255, 0.05); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px; color: #6f7dff;">Ghost Configurations (${sim.ghostConfigs ? sim.ghostConfigs.length : 0} Ghosts)</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+              ${sim.ghostConfigs && sim.ghostConfigs.length > 0 ? sim.ghostConfigs.map((ghost, idx) => `
+                <div style="background: rgba(10, 14, 48, 0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(99, 116, 255, 0.2);">
+                  <h4 style="color: #fff; margin-bottom: 10px;">Ghost ${idx + 1}: ${ghost.ghostType ? ghost.ghostType.toUpperCase() : 'Unknown'}</h4>
+                  <div style="font-size: 14px;">
+                    <p><strong>Type:</strong> ${ghost.ghostType || 'N/A'}</p>
+                    <p><strong>Start Position:</strong> (${ghost.startPosition ? ghost.startPosition.x : 'N/A'}, ${ghost.startPosition ? ghost.startPosition.y : 'N/A'})</p>
+                    <p><strong>Behavior:</strong> ${this.getGhostBehaviorDescription(ghost.ghostType)}</p>
+                  </div>
+                </div>
+              `).join('') : '<p style="color: #9aa4ff;">No ghost configurations available</p>'}
+            </div>
+          </div>
+          
+          <!-- Pacman Information -->
+          <div style="background: rgba(99, 116, 255, 0.05); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px; color: #6f7dff;">Pacman Information</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              <div>
+                <strong>Total Frames:</strong> ${sim.results.totalFrames || 0}
+              </div>
+              <div>
+                <strong>Survival Time:</strong> ${Formatters.formatDuration(sim.results.duration || 0)}
+              </div>
+              ${sim.results.caught ? `
+                <div>
+                  <strong>Caught By:</strong> ${sim.results.caughtByGhost ? sim.results.caughtByGhost.toUpperCase() : 'Unknown'}
+                </div>
+              ` : `
+                <div style="color: #4caf50;">
+                  <strong>Status:</strong> Successfully Escaped
+                </div>
+              `}
+            </div>
+          </div>
+          
+          <!-- Metadata -->
+          <div style="background: rgba(99, 116, 255, 0.05); padding: 20px; border-radius: 8px;">
+            <h3 style="margin-bottom: 15px; color: #6f7dff;">Metadata</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              <div>
+                <strong>Created:</strong> ${Formatters.formatDate(sim.createdAt)}
+              </div>
+              <div>
+                <strong>Simulation ID:</strong><br/>
+                <code style="color: #9aa4ff; word-break: break-all; font-size: 12px;">${sim._id}</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Setup close button
+      document.getElementById('close-modal').onclick = () => {
+        document.body.removeChild(modal);
+      };
+      
+      // Close on overlay click
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      };
+      
+    } catch (error) {
+      Formatters.showLoading(false);
+      Formatters.showToast(`Error loading simulation details: ${error.message}`, 'error');
+    }
+  }
+  
+  getGhostBehaviorDescription(ghostType) {
+    const behaviors = {
+      'blinky': 'Direct chaser - Always targets Pacman\'s current position',
+      'pinky': 'Ambusher - Targets 4 tiles ahead of Pacman',
+      'inky': 'Flanker - Uses vector from Blinky to target ahead of Pacman',
+      'clyde': 'Random - Chases when far, scatters when close'
+    };
+    return behaviors[ghostType] || 'Unknown behavior';
+  }
+  
+  async deleteSimulation(simulationId) {
+    if (!confirm('Are you sure you want to delete this simulation?')) {
+      return;
+    }
+    
+    try {
+      await GameAPI.deleteSimulation(simulationId);
+      Formatters.showToast('Simulation deleted successfully', 'success');
+      // Reload the results page
+      this.loadPage('results');
+    } catch (error) {
+      Formatters.showToast(`Error deleting simulation: ${error.message}`, 'error');
+    }
+  }
+  
   async promptSaveSimulation(results) {
-    const save = confirm(`Simulation complete! ${results.caught ? '👻 Pacman was caught!' : '✅ Pacman escaped!'}\n\nDo you want to save this simulation?`);
+    const save = confirm(`Simulation complete! ${results.caught ? 'Pacman was caught!' : 'Pacman escaped!'}\n\nDo you want to save this simulation?`);
     
     if (save) {
       const name = prompt('Enter simulation name:');
@@ -867,7 +1117,7 @@ class PacmanLabApp {
           const response = await GameAPI.saveSimulation(simulationData);
           
           Formatters.showLoading(false);
-          Formatters.showToast(`✅ Simulation saved: ${name}`, 'success');
+          Formatters.showToast(`Simulation saved: ${name}`, 'success');
         } catch (error) {
           Formatters.showLoading(false);
           Formatters.showToast(`Simulation results recorded but save failed (demo mode): ${error.message}`, 'info');
