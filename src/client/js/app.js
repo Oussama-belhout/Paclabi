@@ -648,7 +648,7 @@ class PacmanLabApp {
           </div>
         ` : ''}
         
-        <div id="ghost-configs" style="${hasRecording || trajectories.length > 0 ? '' : 'opacity: 0.5; pointer-events: none;}">
+        <div id="ghost-configs" style="${hasRecording || trajectories.length > 0 ? '' : 'opacity: 0.5; pointer-events: none;'}">
           <h3>Ghost Configuration</h3>
           <p style="color: #9aa4ff; margin-bottom: 15px;">Configure how each ghost will chase Pacman</p>
           <div class="ghost-config-list" id="ghost-config-list">
