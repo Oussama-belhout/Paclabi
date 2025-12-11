@@ -644,7 +644,17 @@ class PacmanLabApp {
       Formatters.showLoading(true);
       
       const { trajectory } = await GameAPI.getTrajectoryById(trajectoryId);
-      const { maze } = await MazeAPI.getMazeById(trajectory.mazeId);
+      
+      // Check if mazeId is already populated (full object) or just an ID
+      let maze;
+      if (typeof trajectory.mazeId === 'object' && trajectory.mazeId._id) {
+        // Already populated
+        maze = trajectory.mazeId;
+      } else {
+        // Need to fetch the maze
+        const response = await MazeAPI.getMazeById(trajectory.mazeId);
+        maze = response.maze;
+      }
       
       // Set up trajectory for replay
       this.lastRecordedTrajectory = {
