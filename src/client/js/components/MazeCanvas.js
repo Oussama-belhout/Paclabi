@@ -85,20 +85,9 @@ class MazeCanvas {
     const borderWidth = Math.max(2, this.cellSize * 0.15);
     const rows = this.grid.length;
     const cols = this.grid[0].length;
+    const cornerRadius = Math.min(borderWidth * 2, this.cellSize * 0.25);
     
-    // Create gradient for glow effect
-    this.ctx.strokeStyle = '#2E3FFF';
-    this.ctx.lineWidth = borderWidth;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
-    
-    // Add glow effect
-    this.ctx.shadowColor = '#4A5FFF';
-    this.ctx.shadowBlur = borderWidth * 1.5;
-    
-    this.ctx.beginPath();
-    
-    // Check adjacent cells and draw borders accordingly
+    // Check adjacent cells
     const isWall = (r, c) => {
       if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
       return this.grid[r][c] === 1;
@@ -106,35 +95,92 @@ class MazeCanvas {
     
     const offset = borderWidth / 2;
     
-    // Top border
-    if (!isWall(row - 1, col)) {
-      this.ctx.moveTo(x + offset, y + offset);
-      this.ctx.lineTo(x + this.cellSize - offset, y + offset);
-    }
+    // Enhanced multi-layer glow effect
+    const drawGlowingBorder = (blur, opacity, color) => {
+      this.ctx.strokeStyle = color;
+      this.ctx.lineWidth = borderWidth;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      this.ctx.shadowColor = color;
+      this.ctx.shadowBlur = blur;
+      this.ctx.globalAlpha = opacity;
+      
+      this.ctx.beginPath();
+      
+      const hasTop = !isWall(row - 1, col);
+      const hasRight = !isWall(row, col + 1);
+      const hasBottom = !isWall(row + 1, col);
+      const hasLeft = !isWall(row, col - 1);
+      
+      // Draw borders with rounded corners
+      if (hasTop) {
+        this.ctx.moveTo(x + offset + cornerRadius, y + offset);
+        this.ctx.lineTo(x + this.cellSize - offset - cornerRadius, y + offset);
+      }
+      
+      // Top-right corner
+      if (hasTop && hasRight) {
+        this.ctx.arcTo(
+          x + this.cellSize - offset, y + offset,
+          x + this.cellSize - offset, y + offset + cornerRadius,
+          cornerRadius
+        );
+      }
+      
+      if (hasRight) {
+        if (!hasTop) this.ctx.moveTo(x + this.cellSize - offset, y + offset + cornerRadius);
+        this.ctx.lineTo(x + this.cellSize - offset, y + this.cellSize - offset - cornerRadius);
+      }
+      
+      // Bottom-right corner
+      if (hasRight && hasBottom) {
+        this.ctx.arcTo(
+          x + this.cellSize - offset, y + this.cellSize - offset,
+          x + this.cellSize - offset - cornerRadius, y + this.cellSize - offset,
+          cornerRadius
+        );
+      }
+      
+      if (hasBottom) {
+        if (!hasRight) this.ctx.moveTo(x + this.cellSize - offset - cornerRadius, y + this.cellSize - offset);
+        this.ctx.lineTo(x + offset + cornerRadius, y + this.cellSize - offset);
+      }
+      
+      // Bottom-left corner
+      if (hasBottom && hasLeft) {
+        this.ctx.arcTo(
+          x + offset, y + this.cellSize - offset,
+          x + offset, y + this.cellSize - offset - cornerRadius,
+          cornerRadius
+        );
+      }
+      
+      if (hasLeft) {
+        if (!hasBottom) this.ctx.moveTo(x + offset, y + this.cellSize - offset - cornerRadius);
+        this.ctx.lineTo(x + offset, y + offset + cornerRadius);
+      }
+      
+      // Top-left corner
+      if (hasLeft && hasTop) {
+        this.ctx.arcTo(
+          x + offset, y + offset,
+          x + offset + cornerRadius, y + offset,
+          cornerRadius
+        );
+      }
+      
+      this.ctx.stroke();
+    };
     
-    // Right border
-    if (!isWall(row, col + 1)) {
-      this.ctx.moveTo(x + this.cellSize - offset, y + offset);
-      this.ctx.lineTo(x + this.cellSize - offset, y + this.cellSize - offset);
-    }
+    // Draw multiple glow layers for intense glow effect
+    drawGlowingBorder(borderWidth * 4, 0.3, '#6B7FFF'); // Outer glow
+    drawGlowingBorder(borderWidth * 2.5, 0.6, '#4A5FFF'); // Mid glow
+    drawGlowingBorder(borderWidth * 1.2, 1, '#2E3FFF'); // Inner bright
     
-    // Bottom border
-    if (!isWall(row + 1, col)) {
-      this.ctx.moveTo(x + this.cellSize - offset, y + this.cellSize - offset);
-      this.ctx.lineTo(x + offset, y + this.cellSize - offset);
-    }
-    
-    // Left border
-    if (!isWall(row, col - 1)) {
-      this.ctx.moveTo(x + offset, y + this.cellSize - offset);
-      this.ctx.lineTo(x + offset, y + offset);
-    }
-    
-    this.ctx.stroke();
-    
-    // Reset shadow
+    // Reset canvas state
     this.ctx.shadowColor = 'transparent';
     this.ctx.shadowBlur = 0;
+    this.ctx.globalAlpha = 1;
   }
 
   drawPellet(x, y, isPower) {
