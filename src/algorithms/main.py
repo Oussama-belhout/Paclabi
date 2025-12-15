@@ -28,6 +28,31 @@ from utils.maze_converter import internal_to_grid
 from simulation.game_engine import GameEngine
 
 
+def make_symmetric(grid):
+    """
+    Make a maze symmetric horizontally (mirror left-right).
+    This creates a classic Pac-Man style maze.
+    
+    Args:
+        grid: 2D maze grid
+        
+    Returns:
+        Symmetric grid
+    """
+    rows = len(grid)
+    cols = len(grid[0])
+    mid_col = cols // 2
+    
+    # Mirror left half to right half
+    for row in range(rows):
+        for col in range(mid_col):
+            # Mirror cell value
+            mirror_col = cols - 1 - col
+            grid[row][mirror_col] = grid[row][col]
+    
+    return grid
+
+
 def generate_maze(args):
     """Generate a maze based on command arguments."""
     width = args.width
@@ -36,6 +61,7 @@ def generate_maze(args):
     imperfection = args.imperfection
     tunnels_h = args.tunnels_h
     tunnels_v = args.tunnels_v
+    symmetric = getattr(args, 'symmetric', False)
     
     # Select generator
     generators = {
@@ -62,6 +88,10 @@ def generate_maze(args):
         # Convert to grid format
         grid = internal_to_grid(maze, width, height, tunnel_rows, tunnel_cols)
         
+        # Make symmetric if requested
+        if symmetric:
+            grid = make_symmetric(grid)
+        
         return {
             'success': True,
             'grid': grid,
@@ -72,7 +102,8 @@ def generate_maze(args):
             'tunnels': {
                 'horizontal': list(tunnel_rows),
                 'vertical': list(tunnel_cols)
-            }
+            },
+            'symmetric': symmetric
         }
     except Exception as e:
         return {'error': str(e)}
@@ -160,6 +191,8 @@ def main():
                            help='Number of horizontal tunnels')
     maze_parser.add_argument('--tunnels-v', type=int, default=0,
                            help='Number of vertical tunnels')
+    maze_parser.add_argument('--symmetric', action='store_true',
+                           help='Make maze symmetric (like classic Pac-Man)')
     
     # Pellet placement command
     pellet_parser = subparsers.add_parser('pellets', help='Place pellets')

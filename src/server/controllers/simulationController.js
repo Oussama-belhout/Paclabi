@@ -49,16 +49,23 @@ exports.runSimulation = async (req, res) => {
     
     if (mongoose.connection.readyState !== 1) {
       // Demo mode - save to memory
+      console.log('Demo mode: Saving simulation to memory');
+      
       const simulation = {
         _id: `demo-sim-${demoStorage.nextId++}`,
         name,
         trajectoryId,
         mazeId: req.body.mazeId || null,
-        ghostConfigs,
+        ghostConfigs: ghostConfigs.map(config => ({
+          ghostType: config.type || config.ghostType || 'blinky',
+          algorithm: config.algorithm || 'astar',
+          startPosition: config.startPos || config.startPosition || { x: 1, y: 1 }
+        })),
         results: simulationResults || {
           caught: false,
           catchPosition: null,
           catchTime: null,
+          duration: 0,
           totalFrames: 0,
           frames: []
         },
@@ -67,6 +74,8 @@ exports.runSimulation = async (req, res) => {
       };
       
       demoStorage.simulations.push(simulation);
+      
+      console.log('Simulation saved to demo storage:', simulation._id);
       
       return res.status(201).json({
         message: 'Simulation saved successfully (DEMO MODE)',

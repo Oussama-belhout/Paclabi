@@ -71,7 +71,7 @@ class PythonBridge {
   /**
    * Generate a maze
    */
-  async generateMaze(width, height, algorithm = 'kruskal', imperfection = 0, tunnelsH = 1, tunnelsV = 0) {
+  async generateMaze(width, height, algorithm = 'kruskal', imperfection = 0, tunnelsH = 1, tunnelsV = 0, symmetric = false) {
     const args = [
       'generate',
       String(width),
@@ -81,6 +81,10 @@ class PythonBridge {
       '--tunnels-h', String(tunnelsH),
       '--tunnels-v', String(tunnelsV)
     ];
+    
+    if (symmetric) {
+      args.push('--symmetric');
+    }
 
     const result = await this.executeScript('main.py', args);
     

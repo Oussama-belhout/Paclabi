@@ -61,9 +61,12 @@ class MazeCanvas {
 
     // Draw base cell
     if (value === 1) {
-      // Wall
-      this.ctx.fillStyle = this.colors.wall;
+      // Wall - Pac-Man style with glowing borders
+      this.ctx.fillStyle = this.colors.path; // Fill with path color (hollow inside)
       this.ctx.fillRect(x, y, this.cellSize, this.cellSize);
+      
+      // Draw glowing border
+      this.drawWallBorders(row, col, x, y);
     } else {
       // Path
       this.ctx.fillStyle = this.colors.path;
@@ -76,6 +79,62 @@ class MazeCanvas {
         this.drawPellet(x + this.cellSize / 2, y + this.cellSize / 2, true);
       }
     }
+  }
+
+  drawWallBorders(row, col, x, y) {
+    const borderWidth = Math.max(2, this.cellSize * 0.15);
+    const rows = this.grid.length;
+    const cols = this.grid[0].length;
+    
+    // Create gradient for glow effect
+    this.ctx.strokeStyle = '#2E3FFF';
+    this.ctx.lineWidth = borderWidth;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+    
+    // Add glow effect
+    this.ctx.shadowColor = '#4A5FFF';
+    this.ctx.shadowBlur = borderWidth * 1.5;
+    
+    this.ctx.beginPath();
+    
+    // Check adjacent cells and draw borders accordingly
+    const isWall = (r, c) => {
+      if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
+      return this.grid[r][c] === 1;
+    };
+    
+    const offset = borderWidth / 2;
+    
+    // Top border
+    if (!isWall(row - 1, col)) {
+      this.ctx.moveTo(x + offset, y + offset);
+      this.ctx.lineTo(x + this.cellSize - offset, y + offset);
+    }
+    
+    // Right border
+    if (!isWall(row, col + 1)) {
+      this.ctx.moveTo(x + this.cellSize - offset, y + offset);
+      this.ctx.lineTo(x + this.cellSize - offset, y + this.cellSize - offset);
+    }
+    
+    // Bottom border
+    if (!isWall(row + 1, col)) {
+      this.ctx.moveTo(x + this.cellSize - offset, y + this.cellSize - offset);
+      this.ctx.lineTo(x + offset, y + this.cellSize - offset);
+    }
+    
+    // Left border
+    if (!isWall(row, col - 1)) {
+      this.ctx.moveTo(x + offset, y + this.cellSize - offset);
+      this.ctx.lineTo(x + offset, y + offset);
+    }
+    
+    this.ctx.stroke();
+    
+    // Reset shadow
+    this.ctx.shadowColor = 'transparent';
+    this.ctx.shadowBlur = 0;
   }
 
   drawPellet(x, y, isPower) {

@@ -8,6 +8,14 @@ class SimulationViewer {
     if (!this.canvas) {
       throw new Error(`Canvas with id "${canvasId}" not found`);
     }
+    
+    if (!grid || !Array.isArray(grid) || grid.length === 0) {
+      throw new Error('Invalid grid provided to SimulationViewer');
+    }
+    
+    if (!trajectory || !Array.isArray(trajectory) || trajectory.length === 0) {
+      throw new Error('Invalid trajectory provided to SimulationViewer');
+    }
 
     this.mazeCanvas = new MazeCanvas(canvasId, grid);
     this.grid = grid;
@@ -28,6 +36,10 @@ class SimulationViewer {
     this.caughtTime = null;
     this.caughtByGhost = null;
     this.allFrames = []; // Store all frames for saving
+    
+    // Initial render
+    console.log('SimulationViewer initialized with grid:', grid.length, 'x', grid[0]?.length);
+    this.render();
   }
 
   initializeGhosts() {
@@ -178,20 +190,32 @@ class SimulationViewer {
   }
 
   render() {
-    // Render maze
-    this.mazeCanvas.render();
+    // Render maze (this should always work)
+    if (this.mazeCanvas && this.mazeCanvas.render) {
+      this.mazeCanvas.render();
+    }
 
     // Get current Pacman position
     const move = this.trajectory[this.currentFrame];
-    if (move) {
+    if (move && move.position) {
       // Draw Pacman
-      this.mazeCanvas.drawPacman(move.position.y, move.position.x, move.direction);
+      const y = move.position.y;
+      const x = move.position.x;
+      const direction = move.direction || 'RIGHT';
+      
+      if (this.mazeCanvas && this.mazeCanvas.drawPacman) {
+        this.mazeCanvas.drawPacman(y, x, direction);
+      }
     }
 
     // Draw ghosts
-    this.ghostPositions.forEach(ghost => {
-      this.mazeCanvas.drawGhost(ghost.position.y, ghost.position.x, ghost.type);
-    });
+    if (this.ghostPositions && Array.isArray(this.ghostPositions)) {
+      this.ghostPositions.forEach(ghost => {
+        if (ghost.position && this.mazeCanvas && this.mazeCanvas.drawGhost) {
+          this.mazeCanvas.drawGhost(ghost.position.y, ghost.position.x, ghost.type);
+        }
+      });
+    }
   }
 
   getProgress() {

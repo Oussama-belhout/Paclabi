@@ -723,6 +723,10 @@ class PacmanLabApp {
       
       const { trajectory } = await GameAPI.getTrajectoryById(trajectoryId);
       
+      if (!trajectory || !trajectory.moves || trajectory.moves.length === 0) {
+        throw new Error('Invalid trajectory data');
+      }
+      
       // Check if mazeId is already populated (full object) or just an ID
       let maze;
       if (typeof trajectory.mazeId === 'object' && trajectory.mazeId._id) {
@@ -734,6 +738,10 @@ class PacmanLabApp {
         maze = response.maze;
       }
       
+      if (!maze || !maze.grid) {
+        throw new Error('Invalid maze data for trajectory');
+      }
+      
       // Set up trajectory for replay
       this.lastRecordedTrajectory = {
         moves: trajectory.moves,
@@ -742,6 +750,8 @@ class PacmanLabApp {
         trajectoryId: trajectory._id
       };
       
+      console.log('Loaded trajectory with grid:', maze.grid.length, 'x', maze.grid[0]?.length);
+      
       Formatters.showLoading(false);
       
       // Start replay
@@ -749,6 +759,7 @@ class PacmanLabApp {
       
     } catch (error) {
       Formatters.showLoading(false);
+      console.error('Error loading trajectory:', error);
       Formatters.showToast(`Error loading trajectory: ${error.message}`, 'error');
     }
   }
@@ -758,9 +769,26 @@ class PacmanLabApp {
       Formatters.showToast('No trajectory available!', 'error');
       return;
     }
+    
+    if (!this.lastRecordedTrajectory.grid || !Array.isArray(this.lastRecordedTrajectory.grid)) {
+      Formatters.showToast('Invalid trajectory data - no grid found!', 'error');
+      console.error('Invalid trajectory:', this.lastRecordedTrajectory);
+      return;
+    }
+    
+    if (!this.lastRecordedTrajectory.moves || !Array.isArray(this.lastRecordedTrajectory.moves)) {
+      Formatters.showToast('Invalid trajectory data - no moves found!', 'error');
+      console.error('Invalid trajectory:', this.lastRecordedTrajectory);
+      return;
+    }
 
     try {
       const ghostConfigs = ConfigPanel.getGhostConfigValues();
+      
+      console.log('Starting replay with:');
+      console.log('- Grid:', this.lastRecordedTrajectory.grid.length, 'x', this.lastRecordedTrajectory.grid[0]?.length);
+      console.log('- Moves:', this.lastRecordedTrajectory.moves.length);
+      console.log('- Ghosts:', ghostConfigs.length);
       
       // Show simulation viewer
       document.getElementById('simulation-viewer').style.display = 'block';
@@ -808,15 +836,13 @@ class PacmanLabApp {
         }
       }, 100);
 
-      // Initial render
-      this.simulationViewer.render();
-      
-      Formatters.showToast('Simulation ready! Click Play to watch!', 'success');
+      Formatters.showToast('Simulation ready! Maze loaded. Click Play to watch!', 'success');
       
       // Scroll to viewer
       document.getElementById('simulation-viewer').scrollIntoView({ behavior: 'smooth' });
       
     } catch (error) {
+      console.error('Error starting replay:', error);
       Formatters.showToast(`Error starting replay: ${error.message}`, 'error');
     }
   }
@@ -1106,13 +1132,29 @@ class PacmanLabApp {
           // Ensure results are properly structured (deep clone to avoid reference issues)
           const cleanResults = JSON.parse(JSON.stringify(results));
           
+          // Add duration if not present
+          if (!cleanResults.duration && cleanResults.catchTime) {
+            cleanResults.duration = cleanResults.catchTime;
+          } else if (!cleanResults.duration) {
+            cleanResults.duration = Date.now() - this.simulationViewer.simulationStartTime;
+          }
+          
+          // Ensure trajectoryId is set
+          const trajectoryId = this.lastRecordedTrajectory.trajectoryId || 'demo-trajectory';
+          
           const simulationData = {
             name,
-            trajectoryId: this.lastRecordedTrajectory.trajectoryId || 'demo-trajectory',
+            trajectoryId: trajectoryId,
             mazeId: this.lastRecordedTrajectory.mazeId,
-            ghostConfigs: this.simulationViewer.ghostConfigs,
+            ghostConfigs: this.simulationViewer.ghostConfigs.map(config => ({
+              type: config.type,
+              algorithm: config.algorithm || 'astar',
+              startPos: config.startPos
+            })),
             results: cleanResults
           };
+          
+          console.log('Saving simulation:', simulationData);
           
           const response = await GameAPI.saveSimulation(simulationData);
           
@@ -1120,7 +1162,8 @@ class PacmanLabApp {
           Formatters.showToast(`Simulation saved: ${name}`, 'success');
         } catch (error) {
           Formatters.showLoading(false);
-          Formatters.showToast(`Simulation results recorded but save failed (demo mode): ${error.message}`, 'info');
+          console.error('Error saving simulation:', error);
+          Formatters.showToast(`Simulation results recorded but save failed: ${error.message}`, 'info');
         }
       }
     }

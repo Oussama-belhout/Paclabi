@@ -61,6 +61,13 @@ class ConfigPanel {
           </div>
           
           <div class="form-group">
+            <label>
+              <input type="checkbox" id="symmetric">
+              Symmetric Maze (Classic Pac-Man Style)
+            </label>
+          </div>
+          
+          <div class="form-group">
             <label for="pelletAlgorithm">Pellet Placement</label>
             <select id="pelletAlgorithm" class="form-control">
               <option value="strategic">Strategic</option>
@@ -83,6 +90,7 @@ class ConfigPanel {
       tunnelsH: parseInt(document.getElementById('tunnelsH').value),
       tunnelsV: parseInt(document.getElementById('tunnelsV').value),
       hasPellets: document.getElementById('hasPellets').checked,
+      symmetric: document.getElementById('symmetric').checked,
       pelletAlgorithm: document.getElementById('pelletAlgorithm').value
     };
   }

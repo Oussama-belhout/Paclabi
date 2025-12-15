@@ -27,6 +27,7 @@ exports.generateMaze = async (req, res) => {
       imperfection = 0,
       tunnelsH = 1,
       tunnelsV = 0,
+      symmetric = false,
       hasPellets = false,
       pelletAlgorithm = 'strategic'
     } = req.body;
@@ -40,7 +41,7 @@ exports.generateMaze = async (req, res) => {
 
     // Generate maze using Python
     const mazeResult = await pythonBridge.generateMaze(
-      width, height, algorithm, imperfection, tunnelsH, tunnelsV
+      width, height, algorithm, imperfection, tunnelsH, tunnelsV, symmetric
     );
 
     let grid = mazeResult.grid;
@@ -62,6 +63,7 @@ exports.generateMaze = async (req, res) => {
           height,
           algorithm,
           imperfection,
+          symmetric,
           hasPellets,
           pelletAlgorithm: hasPellets ? pelletAlgorithm : null,
           tunnels: {
@@ -92,6 +94,7 @@ exports.generateMaze = async (req, res) => {
         height,
         algorithm,
         imperfection,
+        symmetric,
         hasPellets,
         pelletAlgorithm: hasPellets ? pelletAlgorithm : null,
         tunnels: {

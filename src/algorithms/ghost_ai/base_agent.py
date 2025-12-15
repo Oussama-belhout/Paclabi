@@ -83,8 +83,53 @@ class GhostAgent(ABC):
         return next_pos
     
     def set_position(self, position):
-        """Set ghost's current position."""
-        self.position = position
+        """Set ghost's current position. If position is in a wall, find nearest valid position."""
+        if isinstance(position, dict):
+            position = (position['y'], position['x'])
+        
+        # Check if position is valid (walkable)
+        if self._is_position_valid(position):
+            self.position = position
+        else:
+            # Position is in a wall, find nearest walkable cell
+            nearest = self._find_nearest_walkable(position)
+            if nearest:
+                self.position = nearest
+            else:
+                # If no walkable cell found (shouldn't happen in a valid maze), use as-is
+                self.position = position
+    
+    def _is_position_valid(self, pos):
+        """Check if position is walkable."""
+        row, col = pos
+        if 0 <= row < len(self.grid) and 0 <= col < len(self.grid[0]):
+            return self.grid[row][col] == 0
+        return False
+    
+    def _find_nearest_walkable(self, pos):
+        """Find nearest walkable cell using BFS."""
+        from collections import deque
+        
+        row, col = pos
+        visited = set()
+        queue = deque([(row, col, 0)])  # (row, col, distance)
+        visited.add((row, col))
+        
+        while queue:
+            r, c, dist = queue.popleft()
+            
+            # Check if this position is walkable
+            if self._is_position_valid((r, c)):
+                return (r, c)
+            
+            # Explore neighbors
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nr, nc = r + dr, c + dc
+                if (nr, nc) not in visited and 0 <= nr < len(self.grid) and 0 <= nc < len(self.grid[0]):
+                    visited.add((nr, nc))
+                    queue.append((nr, nc, dist + 1))
+        
+        return None
     
     def set_mode(self, mode):
         """Set ghost's behavior mode."""
