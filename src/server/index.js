@@ -13,6 +13,7 @@ const errorHandler = require('./middleware/errorHandler');
 const mazeRoutes = require('./routes/mazeRoutes');
 const trajectoryRoutes = require('./routes/trajectoryRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
+const batchRoutes = require('./routes/batchRoutes');
 
 // Initialize Express app
 const app = express();
@@ -32,6 +33,7 @@ app.use(express.static(path.join(__dirname, '..', 'client')));
 app.use('/api/mazes', mazeRoutes);
 app.use('/api/trajectories', trajectoryRoutes);
 app.use('/api/simulations', simulationRoutes);
+app.use('/api/batches', batchRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

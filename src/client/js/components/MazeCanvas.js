@@ -87,13 +87,14 @@ class MazeCanvas {
     const cols = this.grid[0].length;
     const cornerRadius = Math.min(borderWidth * 2, this.cellSize * 0.25);
     
-    // Check adjacent cells
+    // Check adjacent cells 
     const isWall = (r, c) => {
       if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
       return this.grid[r][c] === 1;
     };
     
     const offset = borderWidth / 2;
+    const extension = borderWidth * 2; // Extend walls to ensure full overlap and intersection
     
     // Enhanced multi-layer glow effect
     const drawGlowingBorder = (blur, opacity, color) => {
@@ -112,10 +113,18 @@ class MazeCanvas {
       const hasBottom = !isWall(row + 1, col);
       const hasLeft = !isWall(row, col - 1);
       
-      // Draw borders with rounded corners
+      // Check if adjacent cells are walls (for extending borders)
+      const wallTop = isWall(row - 1, col);
+      const wallRight = isWall(row, col + 1);
+      const wallBottom = isWall(row + 1, col);
+      const wallLeft = isWall(row, col - 1);
+      
+      // Draw borders with rounded corners and extended lengths for continuity
       if (hasTop) {
-        this.ctx.moveTo(x + offset + cornerRadius, y + offset);
-        this.ctx.lineTo(x + this.cellSize - offset - cornerRadius, y + offset);
+        const leftExtend = wallLeft ? extension : 0;
+        const rightExtend = wallRight ? extension : 0;
+        this.ctx.moveTo(x + offset + cornerRadius - leftExtend, y + offset);
+        this.ctx.lineTo(x + this.cellSize - offset - cornerRadius + rightExtend, y + offset);
       }
       
       // Top-right corner
@@ -128,8 +137,10 @@ class MazeCanvas {
       }
       
       if (hasRight) {
-        if (!hasTop) this.ctx.moveTo(x + this.cellSize - offset, y + offset + cornerRadius);
-        this.ctx.lineTo(x + this.cellSize - offset, y + this.cellSize - offset - cornerRadius);
+        const topExtend = wallTop ? extension : 0;
+        const bottomExtend = wallBottom ? extension : 0;
+        if (!hasTop) this.ctx.moveTo(x + this.cellSize - offset, y + offset + cornerRadius - topExtend);
+        this.ctx.lineTo(x + this.cellSize - offset, y + this.cellSize - offset - cornerRadius + bottomExtend);
       }
       
       // Bottom-right corner
@@ -142,8 +153,10 @@ class MazeCanvas {
       }
       
       if (hasBottom) {
-        if (!hasRight) this.ctx.moveTo(x + this.cellSize - offset - cornerRadius, y + this.cellSize - offset);
-        this.ctx.lineTo(x + offset + cornerRadius, y + this.cellSize - offset);
+        const rightExtend = wallRight ? extension : 0;
+        const leftExtend = wallLeft ? extension : 0;
+        if (!hasRight) this.ctx.moveTo(x + this.cellSize - offset - cornerRadius + rightExtend, y + this.cellSize - offset);
+        this.ctx.lineTo(x + offset + cornerRadius - leftExtend, y + this.cellSize - offset);
       }
       
       // Bottom-left corner
@@ -156,8 +169,10 @@ class MazeCanvas {
       }
       
       if (hasLeft) {
-        if (!hasBottom) this.ctx.moveTo(x + offset, y + this.cellSize - offset - cornerRadius);
-        this.ctx.lineTo(x + offset, y + offset + cornerRadius);
+        const bottomExtend = wallBottom ? extension : 0;
+        const topExtend = wallTop ? extension : 0;
+        if (!hasBottom) this.ctx.moveTo(x + offset, y + this.cellSize - offset - cornerRadius + bottomExtend);
+        this.ctx.lineTo(x + offset, y + offset + cornerRadius - topExtend);
       }
       
       // Top-left corner

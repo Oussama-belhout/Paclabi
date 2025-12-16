@@ -179,6 +179,17 @@ body {
   color: white;
 }
 
+.btn-info {
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+  color: white;
+}
+
+.btn-info:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+
 /* Cards */
 .card {
   background: rgba(10, 14, 48, 0.85);

@@ -7,6 +7,7 @@ class PacmanLabApp {
     this.currentPage = 'dashboard';
     this.currentMaze = null;
     this.currentTrajectory = null;
+    this.currentBatchId = null;
     this.gameEngine = null;
     this.lastRecordedTrajectory = null; // Store last played trajectory
     this.simulationViewer = null;
@@ -443,7 +444,7 @@ class PacmanLabApp {
           </div>
         ` : `
           <div class="empty-state">
-            <div class="empty-state-icon">▸</div>
+            <div class="empty-state-icon">▶</div>
             <div class="empty-state-text">Select a maze to play</div>
             <button class="btn btn-primary" onclick="app.loadPage('generator')">Go to Generator</button>
           </div>
@@ -617,51 +618,94 @@ class PacmanLabApp {
       <div class="card">
         <div class="card-header">
           <h2>AI Simulation & Replay</h2>
-          <p>Watch your recorded game with ghost AI chasing Pacman!</p>
+          <p>Configure Pacman and ghost AI for simulation</p>
         </div>
         
-        ${hasRecording ? `
-          <div class="info" style="background: rgba(76, 175, 80, 0.2); border-color: #4caf50;">
-            Last played trajectory ready! Or select a saved one below.
+        <!-- Pacman Configuration Widget -->
+        <div class="simulation-section">
+          <h3 style="margin-bottom: 15px; color: #6f7dff;">Pacman Configuration</h3>
+          
+          <div class="simulation-nav-tabs">
+            <button class="simulation-tab-btn active" data-tab="trajectory">
+              <span class="tab-icon">▶</span>
+              Trajectory Simulation
+            </button>
+            <button class="simulation-tab-btn" data-tab="bot">
+              <span class="tab-icon">◉</span>
+              Bot Simulation
+            </button>
           </div>
-        ` : trajectories.length > 0 ? `
-          <div class="info" style="background: rgba(99, 116, 255, 0.2); border-color: #6f7dff;">
-            Select a saved trajectory below to replay
+
+          <!-- Trajectory Simulation Tab -->
+          <div id="tab-trajectory" class="simulation-tab-content active">
+            ${hasRecording ? `
+              <div class="info" style="background: rgba(76, 175, 80, 0.2); border-color: #4caf50;">
+                Last played trajectory ready! Or select a saved one below.
+              </div>
+            ` : trajectories.length > 0 ? `
+
+            ` : `
+              <div class="info" style="background: rgba(255, 152, 0, 0.2); border-color: #ff9800;">
+                No trajectory available. Go to <strong>Play Mode</strong>, play a maze, then save your trajectory!
+              </div>
+            `}
+            
+            ${trajectories.length > 0 || hasRecording ? `
+              <div class="form-group">
+                <label for="trajectory-select">Select Trajectory</label>
+                <select id="trajectory-select" class="form-control">
+                  ${hasRecording ? '<option value="last">Last Played (In Memory)</option>' : ''}
+                  ${trajectories.map(t => `
+                    <option value="${t._id}">
+                      ${t.name} - ${t.moves ? t.moves.length : 0} moves
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+            ` : ''}
           </div>
-        ` : `
-          <div class="info" style="background: rgba(255, 152, 0, 0.2); border-color: #ff9800;">
-            No trajectory available. Go to <strong>Play Mode</strong>, play a maze, then save your trajectory!
+
+          <!-- Bot Simulation Tab -->
+          <div id="tab-bot" class="simulation-tab-content">
+
+            
+            <div class="form-group">
+              <label for="pacman-algorithm-select">Pacman Algorithm</label>
+              <select id="pacman-algorithm-select" class="form-control">
+                <option value="greedy">Greedy - Always moves towards nearest pellet</option>
+                <option value="defensive">Defensive - Prioritizes staying away from ghosts</option>
+                <option value="aggressive">Aggressive - Focuses on collecting pellets quickly</option>
+                <option value="random">Random Walker - Random movement with ghost avoidance</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="bot-maze-select">Select Maze for Bot</label>
+              <select id="bot-maze-select" class="form-control">
+                <option value="">Loading mazes...</option>
+              </select>
+            </div>
           </div>
-        `}
+        </div>
         
-        ${trajectories.length > 0 || hasRecording ? `
-          <div class="form-group">
-            <label for="trajectory-select">Select Trajectory</label>
-            <select id="trajectory-select" class="form-control">
-              ${hasRecording ? '<option value="last">Last Played (In Memory)</option>' : ''}
-              ${trajectories.map(t => `
-                <option value="${t._id}">
-                  ${t.name} - ${t.moves ? t.moves.length : 0} moves
-                </option>
-              `).join('')}
-            </select>
-          </div>
-        ` : ''}
-        
-        <div id="ghost-configs" style="${hasRecording || trajectories.length > 0 ? '' : 'opacity: 0.5; pointer-events: none;'}">
-          <h3>Ghost Configuration</h3>
+        <!-- Ghost Configuration Widget -->
+        <div class="simulation-section" style="margin-top: 32px;">
+          <h3 style="margin-bottom: 15px; color: #6f7dff;">Ghost Configuration</h3>
           <p style="color: #9aa4ff; margin-bottom: 15px;">Configure how each ghost will chase Pacman</p>
-          <div class="ghost-config-list" id="ghost-config-list">
-            ${ConfigPanel.createGhostConfig(0)}
-            ${ConfigPanel.createGhostConfig(1)}
-            ${ConfigPanel.createGhostConfig(2)}
-            ${ConfigPanel.createGhostConfig(3)}
+          
+          <div id="ghost-configs">
+            <div class="ghost-config-list" id="ghost-config-list">
+              ${ConfigPanel.createGhostConfig(0)}
+              ${ConfigPanel.createGhostConfig(1)}
+              ${ConfigPanel.createGhostConfig(2)}
+              ${ConfigPanel.createGhostConfig(3)}
+            </div>
           </div>
         </div>
         
-        <div class="action-buttons">
-          <button class="btn btn-primary" id="start-replay-btn" ${hasRecording || trajectories.length > 0 ? '' : 'disabled'}>
-            ${hasRecording || trajectories.length > 0 ? 'Start Replay' : 'Record a trajectory first'}
+        <div class="action-buttons" style="margin-top: 32px;">
+          <button class="btn btn-primary" id="start-replay-btn">
+            Start Simulation
           </button>
         </div>
       </div>
@@ -669,7 +713,7 @@ class PacmanLabApp {
       <div class="card" id="simulation-viewer" style="display: none; margin-top: 24px;">
         <div class="card-header">
           <h2>Live Simulation</h2>
-          <p>Watching your recorded game with AI ghosts</p>
+          <p>Watching AI simulation</p>
         </div>
         
         <div class="maze-canvas-container">
@@ -702,18 +746,129 @@ class PacmanLabApp {
       </div>
     `;
 
-    if (hasRecording || trajectories.length > 0) {
-      document.getElementById('start-replay-btn').addEventListener('click', async () => {
-        const selected = document.getElementById('trajectory-select').value;
+    // Setup tab navigation
+    this.setupSimulationTabs();
+
+    // Load mazes for bot mode
+    this.loadMazesForBot();
+
+    // Setup start button
+    document.getElementById('start-replay-btn').addEventListener('click', async () => {
+      const activeTab = document.querySelector('.simulation-tab-btn.active').getAttribute('data-tab');
+      
+      if (activeTab === 'trajectory') {
+        const selected = document.getElementById('trajectory-select');
+        if (!selected || selected.options.length === 0) {
+          Formatters.showToast('No trajectory available', 'error');
+          return;
+        }
         
-        if (selected === 'last') {
-          // Use last recorded trajectory
+        if (selected.value === 'last') {
           this.startReplay();
         } else {
-          // Load trajectory from database
-          await this.loadAndReplayTrajectory(selected);
+          await this.loadAndReplayTrajectory(selected.value);
         }
+      } else {
+        // Bot mode
+        await this.startBotSimulation();
+      }
+    });
+  }
+
+  setupSimulationTabs() {
+    const tabButtons = document.querySelectorAll('.simulation-tab-btn');
+    const tabContents = document.querySelectorAll('.simulation-tab-content');
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabName = button.getAttribute('data-tab');
+
+        // Remove active class from all buttons and contents
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Add active class to clicked button and corresponding content
+        button.classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
       });
+    });
+  }
+
+  async loadMazesForBot() {
+    try {
+      const response = await MazeAPI.getAllMazes(1, 50);
+      const mazes = response.mazes || [];
+      
+      const select = document.getElementById('bot-maze-select');
+      if (select) {
+        select.innerHTML = mazes.length > 0 
+          ? mazes.map(m => `<option value="${m._id}">${m.name} (${m.config.width}x${m.config.height})</option>`).join('')
+          : '<option value="">No mazes available</option>';
+      }
+    } catch (error) {
+      console.error('Error loading mazes:', error);
+    }
+  }
+
+  async startBotSimulation() {
+    const algorithm = document.getElementById('pacman-algorithm-select').value;
+    const mazeId = document.getElementById('bot-maze-select').value;
+    
+    if (!mazeId) {
+      Formatters.showToast('Please select a maze', 'error');
+      return;
+    }
+    
+    try {
+      Formatters.showLoading(true);
+      
+      // Load the maze
+      const { maze } = await MazeAPI.getMazeById(mazeId);
+      
+      if (!maze || !maze.grid) {
+        throw new Error('Invalid maze data');
+      }
+      
+      // Find Pacman's starting position in the maze
+      let pacmanStart = null;
+      for (let y = 0; y < maze.grid.length; y++) {
+        for (let x = 0; x < maze.grid[y].length; x++) {
+          if (maze.grid[y][x] === 2) { // 2 is Pacman's starting position
+            pacmanStart = { y, x };
+            break;
+          }
+        }
+        if (pacmanStart) break;
+      }
+      
+      // If no starting position found, use a default one
+      if (!pacmanStart) {
+        pacmanStart = { y: 1, x: 1 };
+      }
+      
+      // Create an initial trajectory with just the starting position
+      // The bot will generate moves dynamically during simulation
+      const initialMoves = [{ ...pacmanStart, timestamp: Date.now() }];
+      
+      this.lastRecordedTrajectory = {
+        moves: initialMoves,
+        mazeId: maze._id,
+        grid: maze.grid,
+        botMode: true,
+        botAlgorithm: algorithm,
+        trajectoryId: 'bot-simulation'
+      };
+      
+      Formatters.showLoading(false);
+      Formatters.showToast(`Starting bot simulation with ${algorithm} algorithm`, 'info');
+      
+      // Start replay (which will handle bot mode)
+      this.startReplay();
+      
+    } catch (error) {
+      Formatters.showLoading(false);
+      console.error('Error starting bot simulation:', error);
+      Formatters.showToast(`Error: ${error.message}`, 'error');
     }
   }
 
@@ -793,12 +948,20 @@ class PacmanLabApp {
       // Show simulation viewer
       document.getElementById('simulation-viewer').style.display = 'block';
       
+      // Check if this is bot mode
+      const isBotMode = this.lastRecordedTrajectory.botMode || false;
+      const botAlgorithm = this.lastRecordedTrajectory.botAlgorithm || null;
+      
+      console.log('- Bot Mode:', isBotMode, '| Algorithm:', botAlgorithm);
+      
       // Create simulation viewer
       this.simulationViewer = new SimulationViewer(
         'simulation-canvas',
         this.lastRecordedTrajectory.grid,
         this.lastRecordedTrajectory.moves,
-        ghostConfigs
+        ghostConfigs,
+        isBotMode,
+        botAlgorithm
       );
       
       // Callback when simulation completes
@@ -874,47 +1037,449 @@ class PacmanLabApp {
   }
   
   async renderResults(container) {
-    // Load all simulations
-    let simulations = [];
-    try {
-      const response = await GameAPI.getAllSimulations(1, 100);
-      simulations = response.simulations || [];
-    } catch (error) {
-      console.error('Error loading simulations:', error);
+    // Check if we're viewing a specific batch
+    const batchId = this.currentBatchId;
+
+    if (batchId) {
+      // Render batch view
+      await this.renderBatchView(container, batchId);
+    } else {
+      // Render combined view with both batches and simulations
+      await this.renderCombinedResultsView(container);
     }
-    
+  }
+
+  async renderCombinedResultsView(container) {
     container.innerHTML = `
       <div class="card">
-        <div class="card-header">
-          <h2>Simulation Results</h2>
-          <p>View detailed information about saved simulation runs</p>
+        <div class="results-nav-tabs">
+          <button class="results-tab-btn active" data-tab="simulations">
+            <span class="tab-icon">▣</span>
+            Simulations
+          </button>
+          <button class="results-tab-btn" data-tab="batches">
+            <span class="tab-icon">≡</span>
+            Batches
+          </button>
         </div>
-        
-        ${simulations.length === 0 ? `
+
+        <!-- Simulations Tab Content -->
+        <div id="tab-simulations" class="results-tab-content active">
+          <div class="card-header">
+            <h2>All Simulations</h2>
+            <p>View and manage individual simulations</p>
+          </div>
+          <div id="simulations-list"></div>
+        </div>
+
+        <!-- Batches Tab Content -->
+        <div id="tab-batches" class="results-tab-content">
+          <div class="card-header">
+            <h2>Simulation Batches</h2>
+            <p>Organize simulations by batch</p>
+          </div>
+          
+          <div class="action-buttons">
+            <button class="btn btn-primary" id="create-batch-btn">Create New Batch</button>
+          </div>
+          
+          <div id="batches-list"></div>
+        </div>
+      </div>
+    `;
+
+    try {
+      Formatters.showLoading(true);
+      
+      // Load both batches and simulations in parallel
+      const [batchesResponse, simulationsResponse] = await Promise.all([
+        GameAPI.getAllBatches(1, 100),
+        GameAPI.getAllSimulations(1, 100)
+      ]);
+
+      const batches = batchesResponse.batches || [];
+      const simulations = simulationsResponse.simulations || [];
+
+      Formatters.showLoading(false);
+
+      // Render simulations
+      if (simulations.length === 0) {
+        document.getElementById('simulations-list').innerHTML = `
           <div class="info" style="background: rgba(255, 152, 0, 0.2); border-color: #ff9800;">
             No saved simulations yet. Run a simulation in AI Simulation mode and save it!
           </div>
-        ` : ''}
-        
-        <div id="simulations-list"></div>
-      </div>
+        `;
+      } else {
+        this.renderSimulationsList(simulations);
+      }
+
+      // Render batches
+      if (batches.length === 0) {
+        document.getElementById('batches-list').innerHTML = `
+          <div class="info" style="background: rgba(255, 152, 0, 0.2); border-color: #ff9800;">
+            No batches created yet. Create one to start organizing simulations!
+          </div>
+        `;
+      } else {
+        this.renderBatchesTable(batches);
+      }
+
+      // Setup tab navigation
+      this.setupResultsTabs();
+
+      // Setup event listener for create batch button
+      document.getElementById('create-batch-btn').addEventListener('click', () => {
+        this.showCreateBatchDialog();
+      });
+    } catch (error) {
+      Formatters.showLoading(false);
+      Formatters.showToast(`Error loading results: ${error.message}`, 'error');
+    }
+  }
+
+  setupResultsTabs() {
+    const tabButtons = document.querySelectorAll('.results-tab-btn');
+    const tabContents = document.querySelectorAll('.results-tab-content');
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabName = button.getAttribute('data-tab');
+
+        // Remove active class from all buttons and contents
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Add active class to clicked button and corresponding content
+        button.classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+      });
+    });
+  }
+
+  renderBatchesTable(batches) {
+    const listEl = document.getElementById('batches-list');
+    listEl.innerHTML = '';
+
+    const table = document.createElement('table');
+    table.className = 'batches-table';
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th>Name</th>
+        <th>Simulations</th>
+        <th>Escape Rate</th>
+        <th>Mean Duration</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
     `;
-    
-    if (simulations.length > 0) {
-      this.renderSimulationsList(simulations);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    batches.forEach((batch) => {
+      const row = document.createElement('tr');
+      row.className = 'batches-table-row';
+      row.style.cursor = 'pointer';
+
+      const escapeRate = batch.stats.totalSimulations > 0 
+        ? batch.stats.escapeRate.toFixed(1) 
+        : 'N/A';
+      const meanDuration = batch.stats.totalSimulations > 0
+        ? Formatters.formatDuration(batch.stats.meanDuration)
+        : 'N/A';
+      const createdDate = Formatters.formatDate(batch.createdAt);
+
+      row.innerHTML = `
+        <td class="col-name"><strong>${batch.name}</strong></td>
+        <td class="col-count">${batch.stats.totalSimulations}</td>
+        <td class="col-escape-rate">
+          <span class="escape-rate-badge" style="background-color: ${batch.stats.escapeRate >= 50 ? '#4caf5020' : '#ff525220'}; color: ${batch.stats.escapeRate >= 50 ? '#4caf50' : '#ff5252'};">
+            ${escapeRate}%
+          </span>
+        </td>
+        <td class="col-duration">${meanDuration}</td>
+        <td class="col-created">${createdDate}</td>
+        <td class="col-actions">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); app.deleteBatch('${batch._id}')">
+            Delete
+          </button>
+        </td>
+      `;
+
+      row.addEventListener('click', () => {
+        this.currentBatchId = batch._id;
+        this.loadPage('results');
+      });
+
+      tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    listEl.appendChild(table);
+  }
+
+  async renderBatchView(container, batchId) {
+    try {
+      Formatters.showLoading(true);
+      const response = await GameAPI.getBatchById(batchId);
+      const batch = response.batch;
+      Formatters.showLoading(false);
+
+      const stats = batch.stats;
+      const escapeRate = stats.totalSimulations > 0 ? stats.escapeRate.toFixed(1) : 0;
+      const meanDuration = stats.totalSimulations > 0 ? Formatters.formatDuration(stats.meanDuration) : 'N/A';
+
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <h2>${batch.name}</h2>
+                <p>Batch analysis and statistics</p>
+              </div>
+              <button class="btn btn-secondary" id="back-to-batches-btn">← Back to Batches</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch Statistics -->
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <h3>Batch Statistics</h3>
+          </div>
+          <div class="batch-stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Simulations</div>
+              <div class="stat-value">${stats.totalSimulations}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Escaped</div>
+              <div class="stat-value" style="color: #4caf50;">${stats.escapedCount}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Caught</div>
+              <div class="stat-value" style="color: #ff5252;">${stats.caughtCount}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Escape Rate</div>
+              <div class="stat-value">${escapeRate}%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Mean Duration</div>
+              <div class="stat-value">${meanDuration}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Mean Frames</div>
+              <div class="stat-value">${stats.meanFrames}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Min Duration</div>
+              <div class="stat-value">${Formatters.formatDuration(stats.minDuration)}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Max Duration</div>
+              <div class="stat-value">${Formatters.formatDuration(stats.maxDuration)}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulations Table -->
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <h3>Simulations in Batch</h3>
+            <p>${batch.simulations.length} simulations</p>
+          </div>
+          <div id="batch-simulations-list"></div>
+        </div>
+      `;
+
+      // Setup back button
+      document.getElementById('back-to-batches-btn').addEventListener('click', () => {
+        this.currentBatchId = null;
+        this.loadPage('results');
+      });
+
+      // Render simulations table
+      if (batch.simulations.length > 0) {
+        this.renderSimulationsTableForBatch(batch.simulations);
+      } else {
+        document.getElementById('batch-simulations-list').innerHTML = `
+          <div class="info" style="background: rgba(255, 152, 0, 0.2); border-color: #ff9800;">
+            No simulations in this batch yet. Add some simulations to analyze them!
+          </div>
+        `;
+      }
+    } catch (error) {
+      Formatters.showLoading(false);
+      Formatters.showToast(`Error loading batch: ${error.message}`, 'error');
+    }
+  }
+
+  renderSimulationsTableForBatch(simulations) {
+    const listEl = document.getElementById('batch-simulations-list');
+    listEl.innerHTML = '';
+
+    const table = document.createElement('table');
+    table.className = 'simulations-table';
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th>Name</th>
+        <th>Outcome</th>
+        <th>Duration</th>
+        <th>Frames</th>
+        <th>Maze</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    `;
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    simulations.forEach((sim) => {
+      const row = document.createElement('tr');
+      row.className = 'simulations-table-row';
+      row.style.cursor = 'pointer';
+
+      const outcome = sim.results.caught ? 'Caught' : 'Escaped';
+      const outcomeColor = sim.results.caught ? '#ff5252' : '#4caf50';
+      const duration = Formatters.formatDuration(sim.results.duration || 0);
+      const frames = sim.results.totalFrames || 0;
+      const mazeIdStr = typeof sim.mazeId === 'string' ? sim.mazeId : (sim.mazeId?._id || sim.mazeId?.name || 'N/A');
+      const mazeName = typeof sim.mazeId === 'object' ? sim.mazeId?.name : 'N/A';
+      const mazeId = mazeIdStr.substring(0, 8) + '...';
+      const createdDate = Formatters.formatDate(sim.createdAt);
+
+      row.innerHTML = `
+        <td class="col-name"><strong>${sim.name}</strong></td>
+        <td class="col-outcome">
+          <span class="outcome-badge" style="background-color: ${outcomeColor}20; color: ${outcomeColor}; border: 1px solid ${outcomeColor};">
+            ${outcome}
+          </span>
+        </td>
+        <td class="col-duration">${duration}</td>
+        <td class="col-frames">${frames}</td>
+        <td class="col-maze" title="${mazeName || mazeIdStr}">${mazeId}</td>
+        <td class="col-created">${createdDate}</td>
+        <td class="col-actions">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); app.viewSimulationDetails('${sim._id}')">
+            Details
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); app.removeFromBatch('${this.currentBatchId}', '${sim._id}')">
+            Remove
+          </button>
+        </td>
+      `;
+
+      row.addEventListener('click', () => {
+        this.viewSimulationDetails(sim._id);
+      });
+
+      tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    listEl.appendChild(table);
+  }
+
+  showCreateBatchDialog() {
+    const batchName = prompt('Enter batch name:');
+    if (!batchName || batchName.trim() === '') return;
+
+    const batchDescription = prompt('Enter batch description (optional):');
+
+    this.createBatch(batchName.trim(), batchDescription ? batchDescription.trim() : '');
+  }
+
+  async createBatch(name, description) {
+    try {
+      Formatters.showLoading(true);
+      await GameAPI.createBatch(name, description);
+      Formatters.showLoading(false);
+      Formatters.showToast(`Batch "${name}" created successfully`, 'success');
+      this.loadPage('results');
+    } catch (error) {
+      Formatters.showLoading(false);
+      Formatters.showToast(`Error creating batch: ${error.message}`, 'error');
+    }
+  }
+
+  async deleteBatch(batchId) {
+    if (!confirm('Are you sure you want to delete this batch? Simulations will not be deleted.')) {
+      return;
+    }
+
+    try {
+      await GameAPI.deleteBatch(batchId);
+      Formatters.showToast('Batch deleted successfully', 'success');
+      this.loadPage('results');
+    } catch (error) {
+      Formatters.showToast(`Error deleting batch: ${error.message}`, 'error');
+    }
+  }
+
+  async removeFromBatch(batchId, simulationId) {
+    if (!confirm('Remove this simulation from batch?')) {
+      return;
+    }
+
+    try {
+      Formatters.showLoading(true);
+      await GameAPI.removeSimulationFromBatch(batchId, simulationId);
+      Formatters.showLoading(false);
+      Formatters.showToast('Simulation removed from batch', 'success');
+      // Reload batch view
+      this.renderBatchView(document.getElementById('app-container'), batchId);
+    } catch (error) {
+      Formatters.showLoading(false);
+      Formatters.showToast(`Error removing simulation: ${error.message}`, 'error');
     }
   }
   
   renderSimulationsList(simulations) {
     const listEl = document.getElementById('simulations-list');
-    if (!listEl) return;
+    if (!listEl) {
+      console.error('simulations-list element not found');
+      return;
+    }
     
+    console.log('Rendering simulations table with', simulations.length, 'simulations');
     listEl.innerHTML = '';
     
-    simulations.forEach((sim, index) => {
-      const item = document.createElement('div');
-      item.className = 'list-item';
-      item.style.cursor = 'pointer';
+    if (simulations.length === 0) {
+      console.log('No simulations to display');
+      return;
+    }
+    
+    // Create table
+    const table = document.createElement('table');
+    table.className = 'simulations-table';
+    console.log('Table created with class:', table.className);
+    
+    // Create header
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th>Name</th>
+        <th>Outcome</th>
+        <th>Duration</th>
+        <th>Ghosts</th>
+        <th>Maze ID</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    `;
+    table.appendChild(thead);
+    
+    // Create body
+    const tbody = document.createElement('tbody');
+    
+    simulations.forEach((sim, idx) => {
+      const row = document.createElement('tr');
       
       // Calculate some stats
       const outcome = sim.results.caught ? 'Caught' : 'Escaped';
@@ -922,30 +1487,53 @@ class PacmanLabApp {
       const duration = Formatters.formatDuration(sim.results.duration || 0);
       const ghostCount = sim.ghostConfigs ? sim.ghostConfigs.length : 0;
       
-      item.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div style="flex: 1;">
-            <h3 style="margin-bottom: 10px;">${sim.name}</h3>
-            <div class="maze-item-details">
-              <p><strong>Outcome:</strong> <span style="color: ${outcomeColor}; font-weight: bold;">${outcome}</span></p>
-              <p><strong>Duration:</strong> ${duration}</p>
-              <p><strong>Ghosts:</strong> ${ghostCount} configured</p>
-              <p><strong>Created:</strong> ${Formatters.formatDate(sim.createdAt)}</p>
-            </div>
-          </div>
-          <div class="action-buttons" style="margin-left: 20px;">
-            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); app.viewSimulationDetails('${sim._id}')">
-              View Details
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); app.deleteSimulation('${sim._id}')">
-              Delete
-            </button>
-          </div>
-        </div>
+      // Handle mazeId - it can be a string or an object
+      const mazeIdStr = typeof sim.mazeId === 'string' ? sim.mazeId : (sim.mazeId?._id || sim.mazeId?.name || 'N/A');
+      const mazeName = typeof sim.mazeId === 'object' ? sim.mazeId?.name : 'N/A';
+      const mazeId = mazeIdStr.substring(0, 8) + '...';
+      
+      const createdDate = Formatters.formatDate(sim.createdAt);
+      
+      console.log(`Adding row ${idx}: ${sim.name}`);
+      
+      row.className = 'simulations-table-row';
+      row.style.cursor = 'pointer';
+      
+      row.innerHTML = `
+        <td class="col-name"><strong>${sim.name}</strong></td>
+        <td class="col-outcome">
+          <span class="outcome-badge" style="background-color: ${outcomeColor}20; color: ${outcomeColor}; border: 1px solid ${outcomeColor};">
+            ${outcome}
+          </span>
+        </td>
+        <td class="col-duration">${duration}</td>
+        <td class="col-ghosts">${ghostCount}</td>
+        <td class="col-maze" title="${mazeName || mazeIdStr}">${mazeId}</td>
+        <td class="col-created">${createdDate}</td>
+        <td class="col-actions">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); app.viewSimulationDetails('${sim._id}')">
+            Details
+          </button>
+          <button class="btn btn-info btn-sm" onclick="event.stopPropagation(); app.showClassifyDialog('${sim._id}')">
+            Classify
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); app.deleteSimulation('${sim._id}')">
+            Delete
+          </button>
+        </td>
       `;
       
-      listEl.appendChild(item);
+      // Add click handler to view details
+      row.addEventListener('click', () => {
+        this.viewSimulationDetails(sim._id);
+      });
+      
+      tbody.appendChild(row);
     });
+    
+    table.appendChild(tbody);
+    listEl.appendChild(table);
+    console.log('Table appended to DOM. Table element:', table);
   }
   
   async viewSimulationDetails(simulationId) {
@@ -1166,6 +1754,96 @@ class PacmanLabApp {
           Formatters.showToast(`Simulation results recorded but save failed: ${error.message}`, 'info');
         }
       }
+    }
+  }
+
+  async showClassifyDialog(simulationId) {
+    try {
+      Formatters.showLoading(true);
+      const response = await GameAPI.getAllBatches(1, 100);
+      const batches = response.batches || [];
+      Formatters.showLoading(false);
+
+      if (batches.length === 0) {
+        Formatters.showToast('No batches found. Create a batch first!', 'info');
+        return;
+      }
+
+      // Create modal dialog
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      `;
+
+      modal.innerHTML = `
+        <div style="max-width: 500px; width: 100%; background: rgba(10, 14, 48, 0.98); padding: 30px; border-radius: 16px; border: 1px solid rgba(99, 116, 255, 0.3);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Classify Simulation to Batch</h3>
+            <button id="close-classify-modal" style="background: none; border: none; color: var(--accent-blue); font-size: 24px; cursor: pointer;">×</button>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 10px; color: var(--text-secondary); font-weight: 600;">Select a batch:</label>
+            <select id="batch-select" style="width: 100%; padding: 12px; background: rgba(11, 14, 43, 0.85); border: 1px solid rgba(132, 141, 255, 0.25); color: var(--text-primary); border-radius: 8px; font-size: 1rem;">
+              ${batches.map(batch => `<option value="${batch._id}">${batch.name}</option>`).join('')}
+            </select>
+          </div>
+          
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn btn-secondary" id="cancel-classify-btn">Cancel</button>
+            <button class="btn btn-primary" id="confirm-classify-btn">Classify</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      document.getElementById('close-classify-modal').onclick = () => {
+        document.body.removeChild(modal);
+      };
+
+      document.getElementById('cancel-classify-btn').onclick = () => {
+        document.body.removeChild(modal);
+      };
+
+      document.getElementById('confirm-classify-btn').onclick = async () => {
+        const batchId = document.getElementById('batch-select').value;
+        if (batchId) {
+          await this.addSimulationToBatch(batchId, simulationId);
+          document.body.removeChild(modal);
+        }
+      };
+
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      };
+    } catch (error) {
+      Formatters.showLoading(false);
+      Formatters.showToast(`Error loading batches: ${error.message}`, 'error');
+    }
+  }
+
+  async addSimulationToBatch(batchId, simulationId) {
+    try {
+      Formatters.showLoading(true);
+      await GameAPI.addSimulationsToBatch(batchId, [simulationId]);
+      Formatters.showLoading(false);
+      Formatters.showToast('Simulation added to batch', 'success');
+    } catch (error) {
+      Formatters.showLoading(false);
+      Formatters.showToast(`Error adding simulation to batch: ${error.message}`, 'error');
     }
   }
 }
